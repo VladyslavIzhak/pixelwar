@@ -24,6 +24,12 @@
       #viewport.dragging{cursor:grabbing}
       .palette{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);z-index:20}
       .color{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.18);box-shadow:inset 0 0 0 2px rgba(0,0,0,0.25);cursor:pointer;position:relative;transition:transform .15s ease}
+      .color.eraser{background:
+        linear-gradient(45deg,#d1d5db 25%,transparent 25%) -4px 0/8px 8px,
+        linear-gradient(-45deg,#d1d5db 25%,transparent 25%) 0 0/8px 8px,
+        linear-gradient(45deg,transparent 75%,#d1d5db 75%) -4px 0/8px 8px,
+        linear-gradient(-45deg,transparent 75%,#d1d5db 75%) 0 0/8px 8px,
+        #ffffff; border-color: rgba(255,255,255,0.28)}
       .color:hover{transform:translateY(-2px)} .color.selected{outline:3px solid rgba(255,255,255,0.35)}
       .cooldown{font-size:12px;color:#e5e7eb;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(0,0,0,0.35);display:flex;align-items:center;gap:8px}
       .progress{width:100px;height:8px;border-radius:999px;background:rgba(255,255,255,0.18);overflow:hidden}
@@ -54,6 +60,7 @@
       <div class="color" data-color="#2ecc71" style="background:#2ecc71" title="Green"></div>
       <div class="color" data-color="#3498db" style="background:#3498db" title="Blue"></div>
       <div class="color" data-color="#9b59b6" style="background:#9b59b6" title="Purple"></div>
+  <div id="eraserTool" class="color eraser" style="display:none" title="Eraser (admin)"></div>
       <div class="cooldown" title="10s cooldown per player">⏱ <span id="cooldownText">Ready</span> <span class="progress"><i id="cooldownBar"></i></span></div>
     </div>
     <div class="hint">Drag with <span class="kbd">LMB</span> or <span class="kbd">MMB</span>. Click with <span class="kbd">LMB</span> to paint. Scroll to zoom. Reset view: <span class="kbd">R</span></div>
@@ -63,7 +70,7 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1aHBma2dzenZiZmFodHlic2p4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNTk0NjAsImV4cCI6MjA3MDgzNTQ2MH0.hmnjPapG9UBGfgjAigxMsZah_U2DYLvi031nLmd2pGg';
       import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-      const canvas = document.getElementById('viewport'); const ctx = canvas.getContext('2d', { alpha: false }); const rtDot = document.getElementById('rtDot'); const rtText = document.getElementById('rtText'); const onlineCountEl = document.getElementById('onlineCount'); const dbText = document.getElementById('dbText'); const dbBanner = document.getElementById('dbBanner'); const hideBannerBtn = document.getElementById('hideBanner'); const cooldownText = document.getElementById('cooldownText'); const cooldownBar = document.getElementById('cooldownBar'); const adminPill = document.getElementById('adminPill'); const adminStateEl = document.getElementById('adminState');
+  const canvas = document.getElementById('viewport'); const ctx = canvas.getContext('2d', { alpha: false }); const rtDot = document.getElementById('rtDot'); const rtText = document.getElementById('rtText'); const onlineCountEl = document.getElementById('onlineCount'); const dbText = document.getElementById('dbText'); const dbBanner = document.getElementById('dbBanner'); const hideBannerBtn = document.getElementById('hideBanner'); const cooldownText = document.getElementById('cooldownText'); const cooldownBar = document.getElementById('cooldownBar'); const adminPill = document.getElementById('adminPill'); const adminStateEl = document.getElementById('adminState'); const eraserEl = document.getElementById('eraserTool');
       hideBannerBtn.addEventListener('click', () => dbBanner.classList.remove('show'));
 
       const WORLD_W = 10000, WORLD_H = 10000; const COOLDOWN_MS = 10_000; const BG_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--grid-bg').trim() || '#e5e7eb'; const MIN_SCALE = 0.25, MAX_SCALE = 20;
@@ -88,7 +95,7 @@
 
       function clampCam(){ const w=canvas.clientWidth,h=canvas.clientHeight; camX=Math.max(0,Math.min(WORLD_W-w/scale,camX)); camY=Math.max(0,Math.min(WORLD_H-h/scale,camY)); }
       canvas.addEventListener('mousedown', (e)=>{ const btn=e.button; if(btn===0||btn===1){ dragging=true; dragBtn=btn===0?1:2; lastMouseX=e.clientX; lastMouseY=e.clientY; dragMoved=false; canvas.classList.add('dragging'); } });
-      window.addEventListener('mouseup', async (e)=>{ if(!dragging) return; const wasLMB=(dragBtn===1); const moved=dragMoved; dragging=false; dragBtn=0; canvas.classList.remove('dragging'); if(wasLMB && !moved){ const {x,y}=screenToWorld(e.clientX,e.clientY); await tryPaintPixel(x,y); } });
+  window.addEventListener('mouseup', async (e)=>{ if(!dragging) return; const wasLMB=(dragBtn===1); const moved=dragMoved; dragging=false; dragBtn=0; canvas.classList.remove('dragging'); if(wasLMB && !moved){ const {x,y}=screenToWorld(e.clientX,e.clientY); if(tool==='erase'){ await tryErasePixel(x,y); } else { await tryPaintPixel(x,y); } } });
       window.addEventListener('mousemove', (e)=>{ if(!dragging) return; const dx=e.clientX-lastMouseX, dy=e.clientY-lastMouseY; if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true; lastMouseX=e.clientX; lastMouseY=e.clientY; camX -= dx/scale; camY -= dy/scale; clampCam(); drawingNeeded=true; scheduleLoadVisibleFromDB(); });
       canvas.addEventListener('click', e=>e.preventDefault()); canvas.addEventListener('contextmenu', e=>e.preventDefault());
       canvas.addEventListener('wheel', (e)=>{ e.preventDefault(); const rect=canvas.getBoundingClientRect(); const mx=e.clientX-rect.left, my=e.clientY-rect.top; const worldX=camX+mx/scale, worldY=camY+my/scale; const factor=Math.exp(-e.deltaY*0.0015); const newScale=Math.max(MIN_SCALE,Math.min(MAX_SCALE,scale*factor)); if(newScale===scale) return; scale=newScale; camX=worldX-mx/scale; camY=worldY-my/scale; clampCam(); drawingNeeded=true; scheduleLoadVisibleFromDB(); }, { passive:false });
@@ -96,7 +103,16 @@
 
       function screenToWorld(clientX,clientY){ const rect=canvas.getBoundingClientRect(); const x=Math.floor((clientX-rect.left)/scale+camX), y=Math.floor((clientY-rect.top)/scale+camY); return { x:Math.max(0,Math.min(WORLD_W-1,x)), y:Math.max(0,Math.min(WORLD_H-1,y)) }; }
 
-      const COLORS_ELEMS=Array.from(document.querySelectorAll('.palette .color')); let selectedColor=COLORS_ELEMS[0].dataset.color; function updateSelectionUI(){ COLORS_ELEMS.forEach(el=>el.classList.toggle('selected', el.dataset.color===selectedColor)); } updateSelectionUI(); COLORS_ELEMS.forEach(el=>el.addEventListener('click',()=>{ selectedColor=el.dataset.color; updateSelectionUI(); }));
+      let tool='paint';
+      const COLORS_ELEMS=Array.from(document.querySelectorAll('.palette .color[data-color]'));
+      let selectedColor=COLORS_ELEMS[0].dataset.color;
+      function updateSelectionUI(){
+        COLORS_ELEMS.forEach(el=>el.classList.toggle('selected', tool==='paint' && el.dataset.color===selectedColor));
+        if(eraserEl) eraserEl.classList.toggle('selected', tool==='erase');
+      }
+      updateSelectionUI();
+      COLORS_ELEMS.forEach(el=>el.addEventListener('click',()=>{ tool='paint'; selectedColor=el.dataset.color; updateSelectionUI(); }));
+      if(eraserEl){ eraserEl.addEventListener('click',()=>{ if(!adminUnlocked) return; tool='erase'; updateSelectionUI(); }); }
 
       const cooldownKey='pixelwar_last_paint'; let lastPaint=parseInt(localStorage.getItem(cooldownKey)||'0',10)||0; let adminUnlocked=false, adminEnabled=false;
       function canPaint(){ return adminEnabled || (Date.now()-lastPaint>=COOLDOWN_MS); }
@@ -118,20 +134,23 @@
       }
       setInterval(updateCooldownUI,200); updateCooldownUI();
 
-      async function tryPaintPixel(x,y){ if(!canPaint()) return; const color=selectedColor; applyPixelLocal(x,y,color); if(!adminEnabled) setPaintNow(); channel.send({ type:'broadcast', event:'pixel_placed', payload:{ x,y,color,t:Date.now(),playerId } }); if(dbEnabled){ const { error } = await supabase.from('pixels').upsert({ x,y,color,updated_at:new Date().toISOString(),player_id:playerId }, { onConflict:'x,y' }); if(error) console.warn('DB upsert failed:', error); } }
+  async function tryPaintPixel(x,y){ if(!canPaint()) return; const color=selectedColor; applyPixelLocal(x,y,color); if(!adminEnabled) setPaintNow(); channel.send({ type:'broadcast', event:'pixel_placed', payload:{ x,y,color,t:Date.now(),playerId } }); if(dbEnabled){ const { error } = await supabase.from('pixels').upsert({ x,y,color,updated_at:new Date().toISOString(),player_id:playerId }, { onConflict:'x,y' }); if(error) console.warn('DB upsert failed:', error); } }
+  function erasePixelLocal(x,y){ pixels.delete(`${x},${y}`); drawingNeeded=true; }
+  async function tryErasePixel(x,y){ if(!adminEnabled) return; erasePixelLocal(x,y); channel.send({ type:'broadcast', event:'pixel_erased', payload:{ x,y,t:Date.now(),playerId } }); if(dbEnabled){ const { error } = await supabase.from('pixels').delete().eq('x',x).eq('y',y); if(error) console.warn('DB delete failed:', error); } }
       function applyPixelLocal(x,y,color){ pixels.set(`${x},${y}`, color); drawingNeeded=true; }
-      channel.on('broadcast', { event:'pixel_placed' }, (ev)=>{ const { x,y,color } = ev.payload || {}; if(typeof x==='number' && typeof y==='number' && typeof color==='string') applyPixelLocal(x,y,color); });
+  channel.on('broadcast', { event:'pixel_placed' }, (ev)=>{ const { x,y,color } = ev.payload || {}; if(typeof x==='number' && typeof y==='number' && typeof color==='string') applyPixelLocal(x,y,color); });
+  channel.on('broadcast', { event:'pixel_erased' }, (ev)=>{ const { x,y } = ev.payload || {}; if(typeof x==='number' && typeof y==='number') erasePixelLocal(x,y); });
 
       const ADMIN_HASH_HEX = '9972438ec81d9dc1518b299d132ab8bb2c8e8abd1bbc877258a237d478f04153';
       const ADMIN_UNLOCK_KEY = 'pixelwar_admin_unlocked';
       if(sessionStorage.getItem(ADMIN_UNLOCK_KEY)==='1'){ adminUnlocked=true; showAdminToggle(); }
       async function promptAdminUnlock(){ if(!ADMIN_HASH_HEX){ console.info('[Admin] Set ADMIN_HASH_HEX in the source to enable admin unlock (SHA-256 hex of your secret).'); return; } const code=prompt('Enter admin code:'); if(!code) return; const digest=await sha256Hex(code); if(digest===ADMIN_HASH_HEX.toLowerCase()){ adminUnlocked=true; sessionStorage.setItem(ADMIN_UNLOCK_KEY,'1'); showAdminToggle(); } else { alert('Invalid code'); } }
-      function showAdminToggle(){ adminPill.style.display='inline-block'; updateAdminUI(); }
+  function showAdminToggle(){ adminPill.style.display='inline-block'; if(eraserEl) eraserEl.style.display='inline-block'; updateAdminUI(); }
       function updateAdminUI(){ adminStateEl.textContent = adminEnabled ? 'ON' : 'OFF'; updateCooldownUI(); }
       adminPill.addEventListener('click',()=>{ if(!adminUnlocked) return; adminEnabled=!adminEnabled; updateAdminUI(); });
       async function sha256Hex(str){ const enc=new TextEncoder(); const data=enc.encode(str); const hash=await crypto.subtle.digest('SHA-256',data); return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
-      async function checkDB(){ const { error } = await supabase.from('pixels').select('x').limit(1); if(error){ console.log('[PixelWar] DB not ready. Using ephemeral broadcast only.'); dbText.textContent='Ephemeral'; dbBanner.classList.add('show'); } else { dbEnabled=true; dbText.textContent='Enabled'; dbBanner.classList.remove('show'); supabase.channel('realtime:pixels').on('postgres_changes',{ event:'*', schema:'public', table:'pixels' }, (payload)=>{ const row=payload.new||payload.record; if(!row) return; const { x,y,color } = row; if(typeof x==='number' && typeof y==='number' && typeof color==='string') applyPixelLocal(x,y,color); }).subscribe(); } }
+  async function checkDB(){ const { error } = await supabase.from('pixels').select('x').limit(1); if(error){ console.log('[PixelWar] DB not ready. Using ephemeral broadcast only.'); dbText.textContent='Ephemeral'; dbBanner.classList.add('show'); } else { dbEnabled=true; dbText.textContent='Enabled'; dbBanner.classList.remove('show'); supabase.channel('realtime:pixels').on('postgres_changes',{ event:'*', schema:'public', table:'pixels' }, (payload)=>{ const et = payload.eventType; if(et==='DELETE'){ const row = payload.old; if(row) erasePixelLocal(row.x|0, row.y|0); return; } const row=payload.new||payload.record; if(!row) return; const { x,y,color } = row; if(typeof x==='number' && typeof y==='number' && typeof color==='string') applyPixelLocal(x,y,color); }).subscribe(); } }
       async function loadVisibleFromDB(){ if(!dbEnabled) return; const width=canvas.clientWidth,height=canvas.clientHeight; const x0=Math.max(0,Math.floor(camX)), y0=Math.max(0,Math.floor(camY)), x1=Math.min(WORLD_W-1,Math.floor(camX+width/scale)), y1=Math.min(WORLD_H-1,Math.floor(camY+height/scale)); const { data, error } = await supabase.from('pixels').select('x,y,color').gte('x',x0).lte('x',x1).gte('y',y0).lte('y',y1).limit(200000); if(error){ console.warn('DB select failed:', error); return; } if(Array.isArray(data)){ for(const row of data) applyPixelLocal(row.x|0, row.y|0, row.color); } }
       await checkDB(); await loadVisibleFromDB(); drawingNeeded=true;
       console.log('[PixelWar] Tip: Press Ctrl+Shift+A to unlock admin (requires you to set ADMIN_HASH_HEX).');
