@@ -20,7 +20,7 @@
       .pill{border:1px solid var(--border);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));border-radius:999px;padding:6px 10px;color:#e5e7eb}
       .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
       #canvasWrap{position:fixed;inset:0}
-      #viewport{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;background:radial-gradient(1200px 800px at 70% 20%, rgba(51,65,85,0.12), transparent 60%),linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.1))}
+  #viewport{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;background:radial-gradient(1200px 800px at 70% 20%, rgba(51,65,85,0.12), transparent 60%),linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.1));touch-action:none;-ms-touch-action:none}
       #viewport.dragging{cursor:grabbing}
       .palette{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);z-index:20}
       .color{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.18);box-shadow:inset 0 0 0 2px rgba(0,0,0,0.25);cursor:pointer;position:relative;transition:transform .15s ease}
@@ -38,6 +38,17 @@
       .banner.show{display:inline-flex} .banner button{all:unset;cursor:pointer;color:#e7e9eb;padding:4px 8px;border:1px solid var(--border);border-radius:8px}
       .hint{position:fixed;right:16px;bottom:16px;color:#cbd5e1;font-size:12px;opacity:.95;z-index:20;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
       .kbd{border:1px solid var(--border);border-bottom:2px solid #0a0f1a;border-radius:6px;padding:2px 6px;background:#0b1220;color:#e7e9eb}
+      @media (pointer:coarse), (max-width: 480px) {
+        .hint{display:none}
+        .topbar{padding:8px 10px}
+        .brand .title{font-size:14px}
+        .stats{gap:8px;font-size:11px}
+        .pill{padding:4px 8px}
+        .palette{bottom:12px;gap:10px;padding:8px 10px;max-width:94vw;overflow-x:auto;-webkit-overflow-scrolling:touch}
+        .color{width:28px;height:28px}
+        .cooldown{font-size:11px;padding:4px 8px}
+        .progress{width:80px;height:6px}
+      }
     </style>
   </head>
   <body>
@@ -98,6 +109,11 @@
   window.addEventListener('mouseup', async (e)=>{ if(!dragging) return; const wasLMB=(dragBtn===1); const moved=dragMoved; dragging=false; dragBtn=0; canvas.classList.remove('dragging'); if(wasLMB && !moved){ const {x,y}=screenToWorld(e.clientX,e.clientY); if(tool==='erase'){ await tryErasePixel(x,y); } else { await tryPaintPixel(x,y); } } });
       window.addEventListener('mousemove', (e)=>{ if(!dragging) return; const dx=e.clientX-lastMouseX, dy=e.clientY-lastMouseY; if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true; lastMouseX=e.clientX; lastMouseY=e.clientY; camX -= dx/scale; camY -= dy/scale; clampCam(); drawingNeeded=true; scheduleLoadVisibleFromDB(); });
       canvas.addEventListener('click', e=>e.preventDefault()); canvas.addEventListener('contextmenu', e=>e.preventDefault());
+  // Touch input: one-finger pan, tap to paint/erase
+  canvas.addEventListener('touchstart', (e)=>{ if(e.touches.length!==1) return; e.preventDefault(); const t=e.touches[0]; dragging=true; dragBtn=1; lastMouseX=t.clientX; lastMouseY=t.clientY; dragMoved=false; canvas.classList.add('dragging'); }, { passive:false });
+  canvas.addEventListener('touchmove', (e)=>{ if(!dragging) return; const t=e.touches[0]; if(!t) return; e.preventDefault(); const dx=t.clientX-lastMouseX, dy=t.clientY-lastMouseY; if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true; lastMouseX=t.clientX; lastMouseY=t.clientY; camX -= dx/scale; camY -= dy/scale; clampCam(); drawingNeeded=true; scheduleLoadVisibleFromDB(); }, { passive:false });
+  canvas.addEventListener('touchend', async (e)=>{ if(!dragging) return; e.preventDefault(); dragging=false; dragBtn=0; canvas.classList.remove('dragging'); if(!dragMoved){ const t=e.changedTouches[0]; if(!t) return; const {x,y}=screenToWorld(t.clientX,t.clientY); if(tool==='erase'){ await tryErasePixel(x,y); } else { await tryPaintPixel(x,y); } } }, { passive:false });
+  canvas.addEventListener('touchcancel', (e)=>{ if(!dragging) return; dragging=false; dragBtn=0; canvas.classList.remove('dragging'); }, { passive:false });
       canvas.addEventListener('wheel', (e)=>{ e.preventDefault(); const rect=canvas.getBoundingClientRect(); const mx=e.clientX-rect.left, my=e.clientY-rect.top; const worldX=camX+mx/scale, worldY=camY+my/scale; const factor=Math.exp(-e.deltaY*0.0015); const newScale=Math.max(MIN_SCALE,Math.min(MAX_SCALE,scale*factor)); if(newScale===scale) return; scale=newScale; camX=worldX-mx/scale; camY=worldY-my/scale; clampCam(); drawingNeeded=true; scheduleLoadVisibleFromDB(); }, { passive:false });
       window.addEventListener('keydown', async (e)=>{ if(e.key.toLowerCase()==='r'){ camX=Math.floor(WORLD_W/2-canvas.clientWidth/2/scale); camY=Math.floor(WORLD_H/2-canvas.clientHeight/2/scale); clampCam(); drawingNeeded=true; scheduleLoadVisibleFromDB(); } if(e.key.toLowerCase()==='a' && e.ctrlKey && e.shiftKey){ await promptAdminUnlock(); } });
 
