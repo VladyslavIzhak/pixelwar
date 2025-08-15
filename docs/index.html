@@ -103,7 +103,7 @@
       function applyPixelLocal(x,y,color){ pixels.set(`${x},${y}`, color); drawingNeeded=true; }
       channel.on('broadcast', { event:'pixel_placed' }, (ev)=>{ const { x,y,color } = ev.payload || {}; if(typeof x==='number' && typeof y==='number' && typeof color==='string') applyPixelLocal(x,y,color); });
 
-      const ADMIN_HASH_HEX = '';
+      const ADMIN_HASH_HEX = '9972438ec81d9dc1518b299d132ab8bb2c8e8abd1bbc877258a237d478f04153';
       const ADMIN_UNLOCK_KEY = 'pixelwar_admin_unlocked';
       if(sessionStorage.getItem(ADMIN_UNLOCK_KEY)==='1'){ adminUnlocked=true; showAdminToggle(); }
       async function promptAdminUnlock(){ if(!ADMIN_HASH_HEX){ console.info('[Admin] Set ADMIN_HASH_HEX in the source to enable admin unlock (SHA-256 hex of your secret).'); return; } const code=prompt('Enter admin code:'); if(!code) return; const digest=await sha256Hex(code); if(digest===ADMIN_HASH_HEX.toLowerCase()){ adminUnlocked=true; sessionStorage.setItem(ADMIN_UNLOCK_KEY,'1'); showAdminToggle(); } else { alert('Invalid code'); } }
