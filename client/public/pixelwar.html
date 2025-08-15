@@ -7,55 +7,45 @@
     <meta name="color-scheme" content="dark light" />
     <style>
       :root {
-        --bg: #0d1117;
-        --panel: #111827;
-        --panel-2: #0b1220;
+        --bg: #0b0f14;
+        --panel: #0f172a;
+        --panel-2: #0a1220;
         --muted: #94a3b8;
         --text: #e5e7eb;
-        --accent: #4f46e5;
+        --accent: #334155; /* dark slate for UI accents */
         --success: #10b981;
         --danger: #ef4444;
         --warning: #f59e0b;
         --border: #1f2937;
-        --grid-bg: #e5e7eb; /* light grey blank pixels */
+        --grid-bg: #e5e7eb; /* light grey blank pixels (canvas only) */
       }
 
       html, body { height: 100%; }
-      body {
-        margin: 0;
-        background: radial-gradient(1200px 800px at 20% 0%, #0a0f1a, #05070b 60%), var(--bg);
-        color: var(--text);
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
-          Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-        overflow: hidden;
-      }
+      body { margin: 0; background: radial-gradient(1200px 800px at 20% 0%, #090e19, #05070b 60%), var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji"; overflow: hidden; }
 
       /* Top bar */
       .topbar {
         position: fixed;
         top: 12px; left: 12px; right: 12px;
         display: flex; align-items: center; justify-content: space-between;
-        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 10px 14px;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.03);
         z-index: 20;
       }
       .brand { display: flex; gap: 10px; align-items: center; font-weight: 700; letter-spacing: 0.3px; }
       .brand .logo {
         width: 28px; height: 28px; border-radius: 8px;
-        background:
-          radial-gradient(8px 8px at 8px 8px, #6ee7b7, transparent 50%),
-          radial-gradient(8px 8px at 20px 20px, #93c5fd, transparent 50%),
-          linear-gradient(135deg, #111827, #0b1220);
+        background: linear-gradient(135deg, #0b1220, #0f172a);
         border: 1px solid var(--border);
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
       }
       .stats { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
-      .pill { border: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border-radius: 999px; padding: 6px 10px; }
+      .pill { border: 1px solid var(--border); background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); border-radius: 999px; padding: 6px 10px; }
       .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
       /* Canvas container */
@@ -63,7 +53,7 @@
       #viewport {
         position: absolute; inset: 0; width: 100%; height: 100%; display: block;
         cursor: grab;
-        background: radial-gradient(1200px 800px at 70% 20%, rgba(99,102,241,0.08), transparent 60%),
+        background: radial-gradient(1200px 800px at 70% 20%, rgba(51,65,85,0.12), transparent 60%),
           linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.1));
       }
       #viewport.dragging { cursor: grabbing; }
@@ -73,17 +63,17 @@
         position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px;
         display: flex; align-items: center; gap: 12px;
         padding: 10px 12px; border: 1px solid var(--border);
-        background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+        background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
         border-radius: 14px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.03);
         z-index: 20;
       }
-      .color { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2); cursor: pointer; position: relative; transition: transform 0.15s ease; }
+      .color { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); box-shadow: inset 0 0 0 2px rgba(0,0,0,0.25); cursor: pointer; position: relative; transition: transform 0.15s ease; }
       .color:hover { transform: translateY(-2px); }
-      .color.selected { outline: 3px solid rgba(79,70,229,0.9); }
-      .cooldown { font-size: 12px; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; }
-      .progress { width: 80px; height: 6px; border-radius: 999px; background: #1f2937; overflow: hidden; }
-      .progress > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #22d3ee); }
+      .color.selected { outline: 3px solid rgba(255,255,255,0.22); }
+      .cooldown { font-size: 12px; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: rgba(0,0,0,0.25); display: flex; align-items: center; gap: 8px; }
+      .progress { width: 80px; height: 6px; border-radius: 999px; background: #0f172a; overflow: hidden; }
+      .progress > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #1f2937, #0b1220); }
 
       /* DB banner */
       .banner { position: fixed; left: 50%; transform: translateX(-50%); top: 60px; z-index: 30; background: #0b1220; color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: none; gap: 10px; align-items: center; box-shadow: 0 6px 24px rgba(0,0,0,0.28); }
@@ -99,25 +89,20 @@
     <div class="topbar">
       <div class="brand">
         <div class="logo" aria-hidden="true"></div>
-        <div>PixelWar</div>
+        <div>Pixel War</div>
       </div>
       <div class="stats">
         <div class="pill" title="Realtime connection">
           <span id="rtDot" class="status-dot" style="background: #ef4444"></span>
           <span id="rtText">Offline</span>
         </div>
-        <div class="pill" title="Players online">
-          👥 <span id="onlineCount">0</span>
-        </div>
-        <div class="pill" title="Database persistence">
-          💾 <span id="dbText">Ephemeral</span>
-        </div>
+        <div class="pill" title="Players online">👥 <span id="onlineCount">0</span></div>
+        <div class="pill" title="Database persistence">💾 <span id="dbText">Ephemeral</span></div>
+        <div id="adminPill" class="pill" style="display:none; cursor:pointer;" title="Admin cheat mode (bypass cooldown)">⚡ Admin <span id="adminState">OFF</span></div>
       </div>
     </div>
 
-    <div id="canvasWrap">
-      <canvas id="viewport"></canvas>
-    </div>
+    <div id="canvasWrap"><canvas id="viewport"></canvas></div>
 
     <div id="dbBanner" class="banner">
       <span>Using realtime broadcast only. To persist pixels and enable late joiners, set up the Supabase table (see console for SQL).</span>
@@ -132,10 +117,7 @@
       <div class="color" data-color="#2ecc71" style="background:#2ecc71" title="Green"></div>
       <div class="color" data-color="#3498db" style="background:#3498db" title="Blue"></div>
       <div class="color" data-color="#9b59b6" style="background:#9b59b6" title="Purple"></div>
-      <div class="cooldown" title="10s cooldown per player">
-        ⏱ <span id="cooldownText">Ready</span>
-        <span class="progress"><i id="cooldownBar"></i></span>
-      </div>
+      <div class="cooldown" title="10s cooldown per player">⏱ <span id="cooldownText">Ready</span> <span class="progress"><i id="cooldownBar"></i></span></div>
     </div>
 
     <div class="hint">Drag with <span class="kbd">LMB</span> or <span class="kbd">MMB</span>. Click with <span class="kbd">LMB</span> to paint. Scroll to zoom. Reset view: <span class="kbd">R</span></div>
@@ -160,6 +142,8 @@
       const hideBannerBtn = document.getElementById('hideBanner');
       const cooldownText = document.getElementById('cooldownText');
       const cooldownBar = document.getElementById('cooldownBar');
+      const adminPill = document.getElementById('adminPill');
+      const adminStateEl = document.getElementById('adminState');
 
       hideBannerBtn.addEventListener('click', () => dbBanner.classList.remove('show'));
 
@@ -167,7 +151,6 @@
       const WORLD_W = 10000, WORLD_H = 10000; // 10k x 10k
       const COOLDOWN_MS = 10_000; // 10s per player
       const BG_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--grid-bg').trim() || '#e5e7eb';
-      const COLORS = Array.from(document.querySelectorAll('.palette .color')).map(el => el.dataset.color);
       const MIN_SCALE = 0.25, MAX_SCALE = 20; // zoom bounds
 
       // --- Player identity (anonymous, local) ---
@@ -341,7 +324,8 @@
         camX -= dx / scale; camY -= dy / scale;
         clampCam(); drawingNeeded = true; scheduleLoadVisibleFromDB();
       });
-
+      canvas.addEventListener('click', e => e.preventDefault());
+      canvas.addEventListener('contextmenu', e => e.preventDefault());
       // Zoom with wheel (cursor-centered)
       canvas.addEventListener('wheel', (e) => {
         e.preventDefault();
@@ -351,7 +335,7 @@
         const worldX = camX + mx / scale;
         const worldY = camY + my / scale;
         const factor = Math.exp(-e.deltaY * 0.0015);
-        const newScale = clamp(scale * factor, MIN_SCALE, MAX_SCALE);
+        const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale * factor));
         if (newScale === scale) return;
         scale = newScale;
         camX = worldX - mx / scale;
@@ -360,11 +344,15 @@
       }, { passive: false });
 
       // Reset view
-      window.addEventListener('keydown', (e) => {
+      window.addEventListener('keydown', async (e) => {
         if (e.key.toLowerCase() === 'r') {
           camX = Math.floor(WORLD_W / 2 - canvas.clientWidth / 2 / scale);
           camY = Math.floor(WORLD_H / 2 - canvas.clientHeight / 2 / scale);
           clampCam(); drawingNeeded = true; scheduleLoadVisibleFromDB();
+        }
+        // Secret unlock: Ctrl+Shift+A
+        if (e.key.toLowerCase() === 'a' && e.ctrlKey && e.shiftKey) {
+          await promptAdminUnlock();
         }
       });
 
@@ -372,9 +360,8 @@
         const rect = canvas.getBoundingClientRect();
         const x = Math.floor((clientX - rect.left) / scale + camX);
         const y = Math.floor((clientY - rect.top) / scale + camY);
-        return { x: clamp(x, 0, WORLD_W - 1), y: clamp(y, 0, WORLD_H - 1) };
+        return { x: Math.max(0, Math.min(WORLD_W - 1, x)), y: Math.max(0, Math.min(WORLD_H - 1, y)) };
       }
-      function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
       // --- Palette selection ---
       const COLORS_ELEMS = Array.from(document.querySelectorAll('.palette .color'));
@@ -386,22 +373,21 @@
       // --- Cooldown handling ---
       const cooldownKey = 'pixelwar_last_paint';
       let lastPaint = parseInt(localStorage.getItem(cooldownKey) || '0', 10) || 0;
-      function canPaint() { return Date.now() - lastPaint >= COOLDOWN_MS; }
+      let adminUnlocked = false; let adminEnabled = false;
+
+      function canPaint() { return adminEnabled || (Date.now() - lastPaint >= COOLDOWN_MS); }
       function setPaintNow() { lastPaint = Date.now(); localStorage.setItem(cooldownKey, String(lastPaint)); }
       function updateCooldownUI() {
+        if (adminEnabled) {
+          cooldownText.textContent = 'Admin';
+          cooldownBar.style.width = '100%';
+          cooldownBar.style.background = 'linear-gradient(90deg, #0ea5e9, #0369a1)';
+          return;
+        }
         const now = Date.now();
         const dt = now - lastPaint;
-        if (dt >= COOLDOWN_MS) {
-          cooldownText.textContent = 'Ready';
-          cooldownBar.style.width = '100%';
-          cooldownBar.style.background = 'linear-gradient(90deg, var(--success), #22d3ee)';
-        } else {
-          const remain = Math.ceil((COOLDOWN_MS - dt) / 1000);
-          cooldownText.textContent = remain + 's';
-          const pct = Math.max(0, Math.min(100, Math.floor((dt / COOLDOWN_MS) * 100)));
-          cooldownBar.style.width = pct + '%';
-          cooldownBar.style.background = 'linear-gradient(90deg, var(--warning), #f59e0b)';
-        }
+        if (dt >= COOLDOWN_MS) { cooldownText.textContent = 'Ready'; cooldownBar.style.width = '100%'; cooldownBar.style.background = 'linear-gradient(90deg, #1f2937, #0b1220)'; }
+        else { const remain = Math.ceil((COOLDOWN_MS - dt) / 1000); cooldownText.textContent = remain + 's'; const pct = Math.max(0, Math.min(100, Math.floor((dt / COOLDOWN_MS) * 100))); cooldownBar.style.width = pct + '%'; cooldownBar.style.background = '#1f2937'; }
       }
       setInterval(updateCooldownUI, 200);
       updateCooldownUI();
@@ -410,110 +396,18 @@
       async function tryPaintPixel(x, y) {
         if (!canPaint()) return;
         const color = selectedColor;
-        applyPixelLocal(x, y, color); // optimistic
-        setPaintNow();
+        applyPixelLocal(x, y, color);
+        if (!adminEnabled) setPaintNow();
         channel.send({ type: 'broadcast', event: 'pixel_placed', payload: { x, y, color, t: Date.now(), playerId } });
         if (dbEnabled) {
-          const { error } = await supabase.from('pixels').upsert({ x, y, color, updated_at: new Date().toISOString(), player_id: playerId }, { onConflict: 'x,y' });
+          const { error } = await supabase
+            .from('pixels')
+            .upsert({ x, y, color, updated_at: new Date().toISOString(), player_id: playerId }, { onConflict: 'x,y' });
           if (error) console.warn('DB upsert failed:', error);
         }
       }
-
       function applyPixelLocal(x, y, color) { pixels.set(`${x},${y}`, color); drawingNeeded = true; }
-
-      channel.on('broadcast', { event: 'pixel_placed' }, (ev) => {
-        const { x, y, color } = ev.payload || {};
-        if (typeof x === 'number' && typeof y === 'number' && typeof color === 'string') applyPixelLocal(x, y, color);
-      });
-
-      // --- DB setup detection & live sync ---
-      async function checkDB() {
-        const { error } = await supabase.from('pixels').select('x').limit(1);
-        if (error) {
-          console.log('[PixelWar] DB not ready. Using ephemeral broadcast only.');
-          console.log('--- SQL to create the table (Run in Supabase SQL Editor) ---');
-          console.log(`
--- Create pixels table for PixelWar
-create table if not exists public.pixels (
-  x int2 not null,
-  y int2 not null,
-  color text not null check (char_length(color) between 4 and 9),
-  updated_at timestamptz not null default now(),
-  player_id uuid,
-  primary key (x, y)
-);
-
-create index if not exists pixels_xy_idx on public.pixels (x, y);
-
--- Enable Realtime on this table in: Database -> Replication -> Configure -> Add table 'public.pixels'
-
-alter table public.pixels enable row level security;
-do $$ begin
-  if not exists (select 1 from pg_policies where tablename = 'pixels' and policyname = 'allow all') then
-    create policy "allow all" on public.pixels for all using (true) with check (true);
-  end if;
-end $$;
-          `.trim());
-          dbEnabled = false; dbText.textContent = 'Ephemeral'; dbBanner.classList.add('show');
-          return false;
-        } else {
-          dbEnabled = true; dbText.textContent = 'Enabled'; dbBanner.classList.remove('show');
-          supabase.channel('realtime:pixels')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pixels' }, (payload) => {
-              const row = payload.new || payload.record;
-              if (!row) return;
-              const { x, y, color } = row;
-              if (typeof x === 'number' && typeof y === 'number' && typeof color === 'string') applyPixelLocal(x, y, color);
-            })
-            .subscribe();
-          return true;
-        }
-      }
-
-      async function loadVisibleFromDB() {
-        if (!dbEnabled) return;
-        const width = canvas.clientWidth; const height = canvas.clientHeight;
-        const x0 = clamp(Math.floor(camX), 0, WORLD_W - 1);
-        const y0 = clamp(Math.floor(camY), 0, WORLD_H - 1);
-        const x1 = clamp(Math.floor(camX + width / scale), 0, WORLD_W - 1);
-        const y1 = clamp(Math.floor(camY + height / scale), 0, WORLD_H - 1);
-        const { data, error } = await supabase
-          .from('pixels')
-          .select('x,y,color')
-          .gte('x', x0).lte('x', x1)
-          .gte('y', y0).lte('y', y1)
-          .limit(200000);
-        if (error) { console.warn('DB select failed:', error); return; }
-        if (Array.isArray(data)) { for (const row of data) applyPixelLocal(row.x|0, row.y|0, row.color); }
-      }
-
-      await checkDB();
-      await loadVisibleFromDB();
-      drawingNeeded = true;
-
-      console.log('[PixelWar] If running from a local file or new domain, ensure Supabase Allowed URLs include your origin for Realtime.');
+      channel.on('broadcast', { event: 'pixel_placed' }, (ev) => { const { x, y, color } = ev.payload || {}; if (typeof x === 'number' && typeof y === 'number' && typeof color === 'string') applyPixelLocal(x, y, color); });
     </script>
-
-    <!--
-    ────────────────────────────────────────────────────────────────────────────────
-    PixelWar DB Setup (copy into Supabase SQL Editor if you want persistence)
-
-    create table if not exists public.pixels (
-      x int2 not null,
-      y int2 not null,
-      color text not null check (char_length(color) between 4 and 9),
-      updated_at timestamptz not null default now(),
-      player_id uuid,
-      primary key (x, y)
-    );
-
-    create index if not exists pixels_xy_idx on public.pixels (x, y);
-
-    alter table public.pixels enable row level security;
-    create policy if not exists "allow all" on public.pixels for all using (true) with check (true);
-
-    In Supabase UI: Database → Replication → Configure → Add table public.pixels to Realtime.
-    ────────────────────────────────────────────────────────────────────────────────
-    -->
   </body>
 </html>
