@@ -6,32 +6,37 @@
     <title>PixelWar — 10k × 10k Realtime Canvas</title>
     <meta name="color-scheme" content="dark light" />
     <style>
-      :root { --bg:#0b0f14; --panel:#0f172a; --panel-2:#0a1220; --muted:#94a3b8; --text:#e5e7eb; --accent:#334155; --success:#10b981; --danger:#ef4444; --warning:#f59e0b; --border:#1f2937; --grid-bg:#e5e7eb; }
+      :root { --bg:#0b0f14; --panel:#0f172a; --panel-2:#0a1220; --muted:#94a3b8; --text:#eaf0f7; --accent:#334155; --success:#10b981; --danger:#ef4444; --warning:#f59e0b; --border:#1f2937; --grid-bg:#e5e7eb; }
       html,body{height:100%} body{margin:0;background:radial-gradient(1200px 800px at 20% 0%, #090e19, #05070b 60%), var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Helvetica Neue,Arial,"Apple Color Emoji","Segoe UI Emoji";overflow:hidden}
-      .topbar{position:fixed;top:12px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));border:1px solid var(--border);border-radius:12px;padding:10px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.03);z-index:20}
-      .brand{display:flex;gap:10px;align-items:center;font-weight:700;letter-spacing:.3px}
-      .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0b1220,#0f172a);border:1px solid var(--border);box-shadow:inset 0 0 0 1px rgba(255,255,255,0.04)}
-      .stats{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted)}
-      .pill{border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));border-radius:999px;padding:6px 10px}
+      .topbar{position:fixed;top:12px;left:12px;right:12px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.4));border:1px solid var(--border);border-radius:12px;padding:10px 14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.03);z-index:20;color:#f8fafc}
+      .brand{display:flex;gap:10px;align-items:center;font-weight:800;letter-spacing:.3px}
+      .brand .title{color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,0.6)}
+      .brand .logo{width:28px;height:28px;border-radius:8px;background:
+        radial-gradient(10px 10px at 8px 8px, rgba(96,165,250,0.9), transparent 60%),
+        radial-gradient(10px 10px at 20px 20px, rgba(16,185,129,0.9), transparent 60%),
+        linear-gradient(135deg,#0b1220,#1f2937);
+        border:1px solid #3b4252;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06), 0 2px 8px rgba(0,0,0,0.4)}
+      .stats{display:flex;align-items:center;gap:12px;font-size:12px;color:#cfe2ff}
+      .pill{border:1px solid var(--border);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));border-radius:999px;padding:6px 10px;color:#e5e7eb}
       .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
       #canvasWrap{position:fixed;inset:0}
-      #viewport{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;background:radial-gradient(1200px 800px at 70% 20%, rgba(51,65,85,0.12), transparent 60%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.1))}
+      #viewport{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;background:radial-gradient(1200px 800px at 70% 20%, rgba(51,65,85,0.12), transparent 60%),linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.1))}
       #viewport.dragging{cursor:grabbing}
-      .palette{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.03);z-index:20}
-      .color{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.12);box-shadow:inset 0 0 0 2px rgba(0,0,0,0.25);cursor:pointer;position:relative;transition:transform .15s ease}
-      .color:hover{transform:translateY(-2px)} .color.selected{outline:3px solid rgba(255,255,255,0.22)}
-      .cooldown{font-size:12px;color:var(--muted);padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(0,0,0,0.25);display:flex;align-items:center;gap:8px}
-      .progress{width:80px;height:6px;border-radius:999px;background:#0f172a;overflow:hidden}
-      .progress>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#1f2937,#0b1220)}
+      .palette{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border);background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.25));border-radius:14px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);z-index:20}
+      .color{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,0.18);box-shadow:inset 0 0 0 2px rgba(0,0,0,0.25);cursor:pointer;position:relative;transition:transform .15s ease}
+      .color:hover{transform:translateY(-2px)} .color.selected{outline:3px solid rgba(255,255,255,0.35)}
+      .cooldown{font-size:12px;color:#e5e7eb;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(0,0,0,0.35);display:flex;align-items:center;gap:8px}
+      .progress{width:100px;height:8px;border-radius:999px;background:rgba(255,255,255,0.18);overflow:hidden}
+      .progress>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#60a5fa,#a78bfa)}
       .banner{position:fixed;left:50%;transform:translateX(-50%);top:60px;z-index:30;background:#0b1220;color:var(--text);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:none;gap:10px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,0.28)}
-      .banner.show{display:inline-flex} .banner button{all:unset;cursor:pointer;color:var(--muted);padding:4px 8px;border:1px solid var(--border);border-radius:8px}
-      .hint{position:fixed;right:16px;bottom:16px;color:var(--muted);font-size:12px;opacity:.9;z-index:20}
-      .kbd{border:1px solid var(--border);border-bottom:2px solid #0a0f1a;border-radius:6px;padding:2px 6px;background:#0b1220;color:#cbd5e1}
+      .banner.show{display:inline-flex} .banner button{all:unset;cursor:pointer;color:#e5e7eb;padding:4px 8px;border:1px solid var(--border);border-radius:8px}
+      .hint{position:fixed;right:16px;bottom:16px;color:#cbd5e1;font-size:12px;opacity:.95;z-index:20;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
+      .kbd{border:1px solid var(--border);border-bottom:2px solid #0a0f1a;border-radius:6px;padding:2px 6px;background:#0b1220;color:#e5e7eb}
     </style>
   </head>
   <body>
     <div class="topbar">
-      <div class="brand"><div class="logo" aria-hidden="true"></div><div>Pixel War</div></div>
+      <div class="brand"><div class="logo" aria-hidden="true"></div><div class="title">Pixel War</div></div>
       <div class="stats">
         <div class="pill" title="Realtime connection"><span id="rtDot" class="status-dot" style="background:#ef4444"></span><span id="rtText">Offline</span></div>
         <div class="pill" title="Players online">👥 <span id="onlineCount">0</span></div>
@@ -96,7 +101,21 @@
       const cooldownKey='pixelwar_last_paint'; let lastPaint=parseInt(localStorage.getItem(cooldownKey)||'0',10)||0; let adminUnlocked=false, adminEnabled=false;
       function canPaint(){ return adminEnabled || (Date.now()-lastPaint>=COOLDOWN_MS); }
       function setPaintNow(){ lastPaint=Date.now(); localStorage.setItem(cooldownKey,String(lastPaint)); }
-      function updateCooldownUI(){ if(adminEnabled){ cooldownText.textContent='Admin'; cooldownBar.style.width='100%'; cooldownBar.style.background='linear-gradient(90deg,#0ea5e9,#0369a1)'; return; } const now=Date.now(), dt=now-lastPaint; if(dt>=COOLDOWN_MS){ cooldownText.textContent='Ready'; cooldownBar.style.width='100%'; cooldownBar.style.background='linear-gradient(90deg,#1f2937,#0b1220)'; } else { const remain=Math.ceil((COOLDOWN_MS-dt)/1000); cooldownText.textContent=remain+'s'; const pct=Math.max(0,Math.min(100,Math.floor((dt/COOLDOWN_MS)*100))); cooldownBar.style.width=pct+'%'; cooldownBar.style.background='#1f2937'; } }
+      function updateCooldownUI(){
+        if(adminEnabled){ cooldownText.textContent='Admin'; cooldownBar.style.width='100%'; cooldownBar.style.background='linear-gradient(90deg,#22d3ee,#60a5fa)'; return; }
+        const now=Date.now(), dt=now-lastPaint;
+        if(dt>=COOLDOWN_MS){
+          cooldownText.textContent='Ready';
+          cooldownBar.style.width='100%';
+          cooldownBar.style.background='linear-gradient(90deg,#10b981,#34d399)';
+        } else {
+          const remain=Math.ceil((COOLDOWN_MS-dt)/1000);
+          cooldownText.textContent=remain+'s';
+          const pct=Math.max(0,Math.min(100,Math.floor((dt/COOLDOWN_MS)*100)));
+          cooldownBar.style.width=pct+'%';
+          cooldownBar.style.background='linear-gradient(90deg,#f59e0b,#fbbf24)';
+        }
+      }
       setInterval(updateCooldownUI,200); updateCooldownUI();
 
       async function tryPaintPixel(x,y){ if(!canPaint()) return; const color=selectedColor; applyPixelLocal(x,y,color); if(!adminEnabled) setPaintNow(); channel.send({ type:'broadcast', event:'pixel_placed', payload:{ x,y,color,t:Date.now(),playerId } }); if(dbEnabled){ const { error } = await supabase.from('pixels').upsert({ x,y,color,updated_at:new Date().toISOString(),player_id:playerId }, { onConflict:'x,y' }); if(error) console.warn('DB upsert failed:', error); } }
